@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Calculadora de Servicio - Clínica San Pablo</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(180deg,#502267 0%, #000000 100%);
+      color: #e6eef6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+    .card {
+      background: rgba(255,255,255,0.05);
+      padding: 20px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+    }
+    h1 {
+      text-align: center;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+    label {
+      font-size: 13px;
+      color: #9aa4b2;
+      display: block;
+      margin-top: 12px;
+      margin-bottom: 4px;
+    }
+    .field-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    input[type="text"], input[type="time"], select {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    input#nameIC {
+      width: 100%;
+    }
+    select:hover {
+      background: #fff;
+      color: #000;
+      cursor: pointer;
+    }
+    button {
+      margin-top: 16px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: #ed6a00;
+      color: #032026;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+    button:hover {
+      background: #502267;
+      color: #fff;
+    }
+    .result {
+      margin-top: 16px;
+      padding: 12px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      font-size: 15px;
+      text-align: center;
+      word-wrap: break-word;
+    }
+    .copy-btn {
+      display: block;
+      margin: 10px auto 0 auto;
+      background: #ed6a00;
+      border: none;
+      color: #032026;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .copy-btn:hover {
+      background: #502267;
+      color: #fff;
+    }
+    /* Responsive */
+    @media (max-width: 480px) {
+      h1 { font-size: 18px; }
+      input, select, button { font-size: 14px; padding: 10px; }
+      .result { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Registro de Servicio</h1>
+
+    <label>Nombre IC</label>
+    <input type="text" id="nameIC" placeholder="Ej: Ney Matsukawa">
+
+    <label>Hora de Entrada</label>
+    <div class="field-row">
+      <input type="time" id="startTime">
+      <select id="startPeriod">
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+
+    <label>Hora de Salida</label>
+    <div class="field-row">
+      <input type="time" id="endTime">
+      <select id="endPeriod">
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </select>
+    </div>
+
+    <button onclick="calculateHours()">Calcular Horas</button>
+
+    <div id="result" class="result" style="display:none;"></div>
+    <button id="copyBtn" class="copy-btn" style="display:none;" onclick="copyResult()">Copiar</button>
+  </div>
+
+  <script>
+    function calculateHours() {
+      const name = document.getElementById("nameIC").value.trim();
+      const startTime = document.getElementById("startTime").value;
+      const startPeriod = document.getElementById("startPeriod").value;
+      const endTime = document.getElementById("endTime").value;
+      const endPeriod = document.getElementById("endPeriod").value;
+      const resultDiv = document.getElementById("result");
+      const copyBtn = document.getElementById("copyBtn");
+
+      if (!name || !startTime || !endTime) {
+        resultDiv.style.display = "block";
+        resultDiv.innerText = "Por favor completa todos los campos.";
+        copyBtn.style.display = "none";
+        return;
+      }
+
+      function parseTime(timeStr, period) {
+        let [h, m] = timeStr.split(":").map(Number);
+        if (period === "PM" && h !== 12) h += 12;
+        if (period === "AM" && h === 12) h = 0;
+        return h * 60 + m;
+      }
+
+      let startMinutes = parseTime(startTime, startPeriod);
+      let endMinutes = parseTime(endTime, endPeriod);
+
+      if (endMinutes < startMinutes) {
+        endMinutes += 24 * 60; // turno de amanecida
+      }
+
+      let diff = endMinutes - startMinutes;
+      let hours = Math.floor(diff / 60);
+      let minutes = diff % 60;
+
+      let textResult = `Nombre IC: ${name}\nEntrada: ${formatTime(startTime, startPeriod)}\nSalida: ${formatTime(endTime, endPeriod)}\nHoras Totales: ${hours}h ${minutes}m`;
+
+      resultDiv.style.display = "block";
+      resultDiv.innerText = textResult;
+      copyBtn.style.display = "block";
+      copyBtn.innerText = "Copiar"; // resetear texto
+    }
+
+    function formatTime(timeStr, period) {
+      let [h, m] = timeStr.split(":");
+      let hour = parseInt(h);
+      let minute = m.padStart(2,"0");
+      return `${hour}:${minute} ${period}`;
+    }
+
+    function copyResult() {
+      const resultText = document.getElementById("result").innerText;
+      const copyBtn = document.getElementById("copyBtn");
+
+      navigator.clipboard.writeText(resultText).then(() => {
+        copyBtn.innerText = "Copiado ✅";
+        setTimeout(() => {
+          copyBtn.innerText = "Copiar";
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
